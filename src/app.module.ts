@@ -3,9 +3,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true, load: [configuration] })],
+  imports: [
+    ScheduleModule.forRoot(),
+    ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

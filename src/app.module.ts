@@ -7,7 +7,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { PrismaModule } from './modules/prisma/prisma.module';
-import KeyvRedis from '@keyv/redis';
 
 @Module({
   imports: [

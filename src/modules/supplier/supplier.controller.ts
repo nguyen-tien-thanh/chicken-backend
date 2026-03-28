@@ -12,7 +12,7 @@ import {
 import { CreateSupplierDto, UpdateSupplierDto } from './supplier.dto';
 import { SupplierService } from './supplier.service';
 
-@Controller('supplier')
+@Controller('suppliers')
 export class SupplierController {
   constructor(private readonly supplierService: SupplierService) {}
 

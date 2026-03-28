@@ -36,9 +36,9 @@ model Permission {
   path             String
   method           Method
   description      String?
-  default          Boolean            @default(false)
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
+  default          Boolean            @default(false)
   rolesPermissions RolesPermissions[]
 
   @@unique([path, method])
@@ -73,13 +73,81 @@ model Customer {
 }
 
 model Supplier {
+  id        String     @id @default(uuid())
+  name      String
+  phone     String     @unique
+  address   String?
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  deletedAt DateTime?  @map("deleted_at")
+  purchases Purchase[]
+
+  @@map("suppliers")
+}
+
+model Purchase {
+  id            String         @id @default(uuid())
+  purchaseDate  DateTime       @map("purchase_date")
+  totalAmount   Float          @map("total_amount")
+  note          String?        @map("note")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  deletedAt     DateTime?      @map("deleted_at")
+  supplierId    String
+  purchaseItems PurchaseItem[]
+  supplier      Supplier       @relation(fields: [supplierId], references: [id])
+
+  @@map("purchases")
+}
+
+model PurchaseItem {
+  id               String    @id @default(uuid())
+  quantity         Float     @map("quantity")
+  quantityUnit     String    @map("quantity_unit")
+  unitPrice        Float     @map("unit_price")
+  amount           Float     @map("amount")
+  avgWeightPerUnit Float     @map("avg_weight_per_unit")
+  note             String?   @map("note")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+  purchaseId       String
+  productId        String
+  product          Product   @relation(fields: [productId], references: [id])
+  purchase         Purchase  @relation(fields: [purchaseId], references: [id])
+
+  @@map("purchase_items")
+}
+
+model ProductCategory {
   id        String    @id @default(uuid())
   name      String
-  phone     String    @unique
-  address   String?
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
+  products  Product[]
+
+  @@map("product_categories")
+}
+
+model Product {
+  id            String          @id @default(uuid())
+  name          String
+  type          ProductType     @map("type")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  deletedAt     DateTime?       @map("deleted_at")
+  categoryId    String
+  category      ProductCategory @relation(fields: [categoryId], references: [id])
+  purchaseItems PurchaseItem[]
+
+  @@map("products")
+}
+
+enum ProductType {
+  LIVE
+  PROCESSED
+  PART
 }
 
 enum Method {

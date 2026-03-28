@@ -7,6 +7,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { PrismaModule } from './modules/prisma/prisma.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { PrismaModule } from './modules/prisma/prisma.module';
     ConfigModule.forRoot({ isGlobal: true, load: [envConfig] }),
     CacheModule.register({ isGlobal: true }),
     PrismaModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [

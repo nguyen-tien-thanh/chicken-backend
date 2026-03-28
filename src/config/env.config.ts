@@ -22,4 +22,13 @@ export default () => ({
     password: process.env.DATABASE_PASSWORD ?? 'secret',
     name: process.env.DATABASE_NAME ?? 'erp',
   },
+
+  jwt: {
+    secret: process.env.JWT_SECRET ?? 'secret',
+    expiresIn: process.env.JWT_EXPIRES_IN ?? '1h',
+  },
+
+  bcrypt: {
+    saltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS ?? '10', 10),
+  },
 });

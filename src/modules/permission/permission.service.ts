@@ -1,5 +1,5 @@
 import { Pagination } from '@/common/dtos';
-import { IQuery } from '@/common/interfaces';
+import { IQuery, IQueryOne } from '@/common/interfaces';
 import {
   ConflictException,
   Injectable,
@@ -39,9 +39,10 @@ export class PermissionService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, query: IQueryOne = {}) {
     const permission = await this.prisma.permission.findUnique({
       where: { id },
+      ...query,
     });
     if (!permission) throw new NotFoundException('Quyền không tồn tại');
     return permission;

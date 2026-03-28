@@ -1,5 +1,5 @@
 import { ApiAuth, Query } from '@/common/decorators';
-import { IQuery } from '@/common/interfaces';
+import { IQuery, IQueryOne } from '@/common/interfaces';
 import {
   Body,
   Controller,
@@ -28,8 +28,8 @@ export class RoleController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.roleService.findOne(id);
+  findOne(@Param('id') id: string, @Query() query: IQueryOne) {
+    return this.roleService.findOne(id, query);
   }
 
   @Patch(':id')

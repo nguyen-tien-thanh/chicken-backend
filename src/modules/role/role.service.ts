@@ -1,5 +1,5 @@
 import { Pagination } from '@/common/dtos';
-import { IQuery } from '@/common/interfaces';
+import { IQuery, IQueryOne } from '@/common/interfaces';
 import {
   ConflictException,
   Injectable,
@@ -56,8 +56,8 @@ export class RoleService {
     });
   }
 
-  async findOne(id: string) {
-    const role = await this.prisma.role.findUnique({ where: { id } });
+  async findOne(id: string, query: IQueryOne = {}) {
+    const role = await this.prisma.role.findUnique({ where: { id }, ...query });
     if (!role) throw new NotFoundException('Vai trò không tồn tại');
     return role;
   }

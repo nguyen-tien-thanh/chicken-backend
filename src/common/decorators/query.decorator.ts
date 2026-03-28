@@ -1,4 +1,4 @@
-import { IQuery } from '@/common/interfaces';
+import { IQuery, IQueryOne, IQueryWithoutInclude } from '@/common/interfaces';
 import { jsonGet } from '@/common/utils';
 import {
   BadRequestException,
@@ -7,18 +7,20 @@ import {
 } from '@nestjs/common';
 import { DECORATORS } from '@nestjs/swagger/dist/constants';
 
-export type IQueryWithoutInclude = Omit<IQuery, 'include'>;
-
 export const Query = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext): IQuery => {
+  (
+    data: unknown,
+    ctx: ExecutionContext,
+  ): IQuery | IQueryOne | IQueryWithoutInclude => {
     const request = ctx.switchToHttp().getRequest();
+    const getOneRequest = request.params.id ? true : false;
 
     const query: IQuery = {
       take:
         jsonGet(request.query, 'take') == -1 // -1 means all
           ? undefined
-          : jsonGet(request.query, 'take', 10),
-      skip: jsonGet(request.query, 'skip', 0),
+          : jsonGet(request.query, 'take', getOneRequest ? undefined : 10),
+      skip: jsonGet(request.query, 'skip'),
       where: jsonGet(request.query, 'where', {}),
       include: jsonGet(request.query, 'include', {}),
       orderBy: jsonGet(request.query, 'orderBy', []),
@@ -39,6 +41,15 @@ export const Query = createParamDecorator(
     if (query.include && query.select) {
       throw new BadRequestException(
         'Include and select cannot be used together',
+      );
+    }
+
+    if (
+      getOneRequest &&
+      (query.take || query.skip || query.orderBy || query.where)
+    ) {
+      throw new BadRequestException(
+        'This endpoint only support include and select',
       );
     }
 

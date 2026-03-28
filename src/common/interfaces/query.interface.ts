@@ -6,3 +6,6 @@ export interface IQuery {
   orderBy?: Record<string, 'asc' | 'desc'>[];
   select?: Record<string, boolean | any>;
 }
+
+export type IQueryWithoutInclude = Omit<IQuery, 'include'>;
+export type IQueryOne = Pick<IQuery, 'include' | 'select'>;

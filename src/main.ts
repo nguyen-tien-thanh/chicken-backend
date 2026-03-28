@@ -1,12 +1,14 @@
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(Logger));
   const configService = app.get(ConfigService);
   const isProduction = configService.get('env') === 'production';
   const corsOrigin = configService.get<string[]>('cors.origin');
@@ -42,6 +44,6 @@ async function bootstrap() {
   const port = configService.get<number>('port') ?? 8080;
   await app.listen(port);
 
-  Logger.log(`🚀 Application is running on: http://localhost:${port}`);
+  app.get(Logger).log(`🚀 Application is running on: http://localhost:${port}`);
 }
 bootstrap();

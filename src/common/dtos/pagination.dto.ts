@@ -1,13 +1,4 @@
-import { safeJson } from '@/common';
-
-export interface PaginationResultInterface<T> {
-  results: T[];
-  currentPage: number;
-  pageSize: number;
-  totalItems: number;
-  next?: number;
-  previous?: number;
-}
+import { PaginationResultInterface, safeJson } from '@/common';
 
 export class Pagination<T> {
   currentPage: number;
@@ -30,6 +21,6 @@ export class Pagination<T> {
     this.totalItems = totalItems;
     this.next = next;
     this.previous = previous;
-    this.results = safeJson(results);
+    this.results = safeJson(results) as T[];
   }
 }

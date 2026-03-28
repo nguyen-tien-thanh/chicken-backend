@@ -1,12 +1,12 @@
 import {
   Injectable,
   Logger,
-  OnModuleInit,
   OnModuleDestroy,
+  OnModuleInit,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
 import { ConfigService } from '@nestjs/config';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService
@@ -16,13 +16,11 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
 
   constructor(private readonly config: ConfigService) {
-    const databaseConfig = config.get('database');
-    const connectionString = `postgresql://${databaseConfig.user}:${databaseConfig.password}@${databaseConfig.host}:${databaseConfig.port}/${databaseConfig.name}`;
-
-    if (!connectionString) throw new Error('DATABASE_URL is not defined');
+    const databaseUrl = config.get<string>('databaseUrl');
+    if (!databaseUrl) throw new Error('DATABASE_URL is not defined');
 
     super({
-      adapter: new PrismaPg({ connectionString }),
+      adapter: new PrismaPg({ connectionString: databaseUrl }),
       log: ['error', 'warn'], // add 'query' only when debugging
     });
   }

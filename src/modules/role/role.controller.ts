@@ -1,3 +1,4 @@
+import { ApiAuth } from '@/common';
 import {
   Body,
   Controller,
@@ -11,6 +12,7 @@ import { CreateRoleDto, UpdateRoleDto } from './role.dto';
 import { RoleService } from './role.service';
 
 @Controller('roles')
+@ApiAuth()
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
@@ -26,16 +28,16 @@ export class RoleController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.roleService.findOne(+id);
+    return this.roleService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
-    return this.roleService.update(+id, updateRoleDto);
+    return this.roleService.update(id, updateRoleDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.roleService.remove(+id);
+    return this.roleService.remove(id);
   }
 }

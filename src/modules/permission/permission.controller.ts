@@ -1,3 +1,4 @@
+import { ApiAuth } from '@/common';
 import {
   Body,
   Controller,
@@ -11,6 +12,7 @@ import { CreatePermissionDto, UpdatePermissionDto } from './permission.dto';
 import { PermissionService } from './permission.service';
 
 @Controller('permissions')
+@ApiAuth()
 export class PermissionController {
   constructor(private readonly permissionService: PermissionService) {}
 
@@ -26,7 +28,7 @@ export class PermissionController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.permissionService.findOne(+id);
+    return this.permissionService.findOne(id);
   }
 
   @Patch(':id')
@@ -34,11 +36,11 @@ export class PermissionController {
     @Param('id') id: string,
     @Body() updatePermissionDto: UpdatePermissionDto,
   ) {
-    return this.permissionService.update(+id, updatePermissionDto);
+    return this.permissionService.update(id, updatePermissionDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.permissionService.remove(+id);
+    return this.permissionService.remove(id);
   }
 }

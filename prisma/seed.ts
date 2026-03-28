@@ -1,5 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { Method, PrismaClient } from '@prisma/client';
+import { Method, PrismaClient, ProductType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import 'dotenv/config';
 
@@ -10,8 +10,94 @@ const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: databaseUrl }),
 });
 
-async function main() {
+async function seedBusiness(prisma: PrismaClient) {
+  // ===== SUPPLIER =====
+  const supplier = await prisma.supplier.create({
+    data: {
+      name: 'Trại gà A',
+      phone: '0900000001',
+      address: 'Củ Chi',
+    },
+  });
+
+  // ===== CATEGORY =====
+  const category = await prisma.productCategory.create({
+    data: {
+      name: 'Gà',
+    },
+  });
+
+  // ===== PRODUCT =====
+  const gaSong = await prisma.product.create({
+    data: {
+      name: 'Gà ta sống',
+      type: ProductType.LIVE,
+      categoryId: category.id,
+    },
+  });
+
+  const gaLam = await prisma.product.create({
+    data: {
+      name: 'Gà ta làm sẵn',
+      type: ProductType.PROCESSED,
+      categoryId: category.id,
+    },
+  });
+
+  // ===== PURCHASE =====
+  const purchase = await prisma.purchase.create({
+    data: {
+      supplierId: supplier.id,
+      purchaseDate: new Date(),
+      totalAmount: 12000000,
+      note: 'Nhập gà sáng',
+    },
+  });
+
+  // ===== PURCHASE ITEM =====
+  const quantity = 100; // 100 con
+  const avgWeight = 2; // 2kg/con
+  const totalWeight = quantity * avgWeight; // 200kg
+  const unitPrice = 120000;
+
+  const purchaseItem = await prisma.purchaseItem.create({
+    data: {
+      purchaseId: purchase.id,
+      productId: gaSong.id,
+      quantity,
+      quantityUnit: 'con',
+      avgWeightPerUnit: avgWeight,
+      unitPrice,
+      amount: quantity * unitPrice,
+      note: 'Gà đẹp',
+    },
+  });
+
+  // ===== INVENTORY (NHẬP KHO) =====
+  const costPerKg = (quantity * unitPrice) / totalWeight;
+
+  await prisma.inventoryTransaction.create({
+    data: {
+      productId: gaSong.id,
+      transactionDate: new Date(),
+      refType: 'PURCHASE',
+      refId: purchase.id,
+      direction: 'IN',
+      quantity: totalWeight, // 🔥 convert sang kg
+      quantityUnit: 'kg',
+      unitCost: costPerKg,
+      totalCost: costPerKg * totalWeight,
+      note: 'Nhập kho từ purchase',
+    },
+  });
+
+  console.log('✅ Seed business done');
+}
+
+async function seedPermissions(prisma: PrismaClient) {
   await prisma.user.deleteMany();
+  await prisma.rolesPermissions.deleteMany();
+  await prisma.permission.deleteMany();
   await prisma.role.deleteMany();
 
   const permissions = await prisma.permission.createManyAndReturn({
@@ -68,8 +154,12 @@ async function main() {
     ],
     skipDuplicates: true,
   });
+  console.log('🌱 Seed permissions done');
+}
 
-  console.log('🌱 Seed done');
+async function main() {
+  await seedPermissions(prisma);
+  await seedBusiness(prisma);
 }
 
 main()

@@ -131,17 +131,50 @@ model ProductCategory {
 }
 
 model Product {
-  id            String          @id @default(uuid())
-  name          String
-  type          ProductType     @map("type")
-  createdAt     DateTime        @default(now()) @map("created_at")
-  updatedAt     DateTime        @updatedAt @map("updated_at")
-  deletedAt     DateTime?       @map("deleted_at")
-  categoryId    String
-  category      ProductCategory @relation(fields: [categoryId], references: [id])
-  purchaseItems PurchaseItem[]
+  id                    String                 @id @default(uuid())
+  name                  String
+  type                  ProductType            @map("type")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  deletedAt             DateTime?              @map("deleted_at")
+  categoryId            String
+  category              ProductCategory        @relation(fields: [categoryId], references: [id])
+  purchaseItems         PurchaseItem[]
+  inventoryTransactions InventoryTransaction[]
 
   @@map("products")
+}
+
+model InventoryTransaction {
+  id              String                        @id @default(uuid())
+  transactionDate DateTime                      @map("transaction_date")
+  refType         InventoryTransactionType      @map("ref_type")
+  refId           String                        @map("ref_id")
+  direction       InventoryTransactionDirection
+  quantity        Float
+  quantityUnit    String                        @map("quantity_unit")
+  unitCost        Float                         @map("unit_cost")
+  totalCost       Float                         @map("total_cost")
+  note            String?
+  createdAt       DateTime                      @default(now()) @map("created_at")
+  updatedAt       DateTime                      @updatedAt @map("updated_at")
+  productId       String
+  product         Product                       @relation(fields: [productId], references: [id])
+
+  @@map("inventory_transactions")
+}
+
+enum InventoryTransactionType {
+  PURCHASE
+  SALE
+  ADJUSTMENT
+  TRANSFER
+  OTHER
+}
+
+enum InventoryTransactionDirection {
+  IN
+  OUT
 }
 
 enum ProductType {

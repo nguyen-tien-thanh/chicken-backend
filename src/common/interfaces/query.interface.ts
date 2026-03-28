@@ -8,4 +8,6 @@ export interface IQuery {
 }
 
 export type IQueryWithoutInclude = Omit<IQuery, 'include'>;
+
 export type IQueryOne = Pick<IQuery, 'include' | 'select'>;
+export type IQueryOneWithoutInclude = Omit<IQueryOne, 'include'>;

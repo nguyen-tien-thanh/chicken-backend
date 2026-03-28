@@ -60,6 +60,18 @@ model RolesPermissions {
   @@map("roles_permissions")
 }
 
+model Customer {
+  id        String    @id @default(uuid())
+  name      String?
+  phone     String    @unique
+  address   String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("customers")
+}
+
 enum Method {
   GET
   POST

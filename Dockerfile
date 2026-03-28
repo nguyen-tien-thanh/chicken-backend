@@ -30,6 +30,6 @@ COPY --from=builder /app/package.json ./
 
 USER node
 
-EXPOSE 3000
+EXPOSE 8080
 
 CMD ["node", "dist/src/main.js"]

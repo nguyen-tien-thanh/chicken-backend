@@ -1,4 +1,4 @@
-import { AuthGuard } from '@/common';
+import { AuthGuard } from '@/common/guards';
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';

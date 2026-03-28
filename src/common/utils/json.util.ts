@@ -10,3 +10,7 @@ export const safeJson = (json: any) => {
   }
   return json;
 };
+
+export const jsonGet = (json: any, key: string) => {
+  return safeJson(json)[key];
+};

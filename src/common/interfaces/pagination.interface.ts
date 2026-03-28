@@ -1,4 +1,4 @@
-export interface PaginationResultInterface<T> {
+export interface IPaginationResult<T> {
   results: T[];
   currentPage: number;
   pageSize: number;

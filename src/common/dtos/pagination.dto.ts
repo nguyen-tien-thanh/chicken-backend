@@ -1,4 +1,5 @@
-import { PaginationResultInterface, safeJson } from '@/common';
+import { IPaginationResult } from '@/common/interfaces';
+import { safeJson } from '@/common/utils';
 
 export class Pagination<T> {
   currentPage: number;
@@ -15,7 +16,7 @@ export class Pagination<T> {
     totalItems,
     next,
     previous,
-  }: PaginationResultInterface<T>) {
+  }: IPaginationResult<T>) {
     this.currentPage = currentPage;
     this.pageSize = pageSize;
     this.totalItems = totalItems;

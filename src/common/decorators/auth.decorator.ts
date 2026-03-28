@@ -1,6 +1,6 @@
+import { AuthGuard } from '@/common/guards/auth.guard';
 import { applyDecorators, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@/common';
 
 export function ApiAuth() {
   return applyDecorators(UseGuards(AuthGuard), ApiBearerAuth('token'));

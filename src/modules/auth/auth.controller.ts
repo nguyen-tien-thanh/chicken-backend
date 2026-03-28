@@ -1,8 +1,8 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto } from './auth.dto';
-import { ApiAuth, GetUser } from '@/common';
+import { ApiAuthNoPermission, GetUser } from '@/common/decorators';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { LoginDto, RegisterDto } from './auth.dto';
+import { AuthService } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
@@ -19,7 +19,7 @@ export class AuthController {
   }
 
   @Get('profile')
-  @ApiAuth()
+  @ApiAuthNoPermission()
   profile(@GetUser() user: User) {
     return this.authService.profile(user);
   }

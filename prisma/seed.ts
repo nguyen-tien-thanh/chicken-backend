@@ -1,5 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 import 'dotenv/config';
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -10,42 +11,49 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  // 🔥 clear dữ liệu (optional)
   await prisma.user.deleteMany();
   await prisma.role.deleteMany();
 
-  // 👇 tạo role
-  const adminRole = await prisma.role.create({
-    data: {
-      name: 'ADMIN',
-      description: 'Admin role',
-    },
+  const roles = await prisma.role.createManyAndReturn({
+    data: [
+      {
+        name: 'ADMIN',
+        description: 'Admin role',
+      },
+      {
+        name: 'STAFF',
+        description: 'Staff role',
+      },
+      {
+        name: 'USER',
+        description: 'User role',
+      },
+    ],
+    skipDuplicates: true,
   });
 
-  const staffRole = await prisma.role.create({
-    data: {
-      name: 'STAFF',
-      description: 'Staff role',
-    },
-  });
-
-  // 👇 tạo user
-  await prisma.user.create({
-    data: {
-      email: 'admin@gmail.com',
-      password: '123456',
-      name: 'Admin',
-      roleId: adminRole.id,
-    },
-  });
-
-  await prisma.user.create({
-    data: {
-      email: 'staff@gmail.com',
-      password: '123456',
-      name: 'Staff',
-      roleId: staffRole.id,
-    },
+  const users = await prisma.user.createManyAndReturn({
+    data: [
+      {
+        email: 'admin@gmail.com',
+        password: await bcrypt.hash('admin', 10),
+        name: 'Admin',
+        roleId: roles.find((role) => role.name === 'ADMIN')?.id ?? '',
+      },
+      {
+        email: 'staff@gmail.com',
+        password: await bcrypt.hash('staff', 10),
+        name: 'Staff',
+        roleId: roles.find((role) => role.name === 'STAFF')?.id ?? '',
+      },
+      {
+        email: 'user@gmail.com',
+        password: await bcrypt.hash('user', 10),
+        name: 'User',
+        roleId: roles.find((role) => role.name === 'USER')?.id ?? '',
+      },
+    ],
+    skipDuplicates: true,
   });
 
   console.log('🌱 Seed done');

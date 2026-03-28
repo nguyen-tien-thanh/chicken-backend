@@ -13,7 +13,7 @@ export class CreatePermissionDto {
   @IsNotEmpty()
   method: Method;
 
-  @ApiProperty({ description: 'Permission description' })
+  @ApiProperty({ description: 'Permission description', required: false })
   @IsString()
   @IsOptional()
   description?: string;

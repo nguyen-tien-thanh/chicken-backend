@@ -1,4 +1,4 @@
-import { ApiAuth } from '@/common';
+import { ApiAuth } from '@/common/decorators';
 import {
   Body,
   Controller,

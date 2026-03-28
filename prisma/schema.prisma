@@ -33,13 +33,15 @@ model Role {
 
 model Permission {
   id              String           @id @default(uuid())
-  path            String           @unique
+  path            String
   method          Method
   description     String?
   createdAt       DateTime         @default(now()) @map("created_at")
   updatedAt       DateTime         @updatedAt @map("updated_at")
   rolePermissions RolePermission[]
 
+  @@unique([path, method])
+  @@index([path, method])
   @@map("permissions")
 }
 
@@ -51,6 +53,10 @@ model RolePermission {
   updatedAt    DateTime   @updatedAt @map("updated_at")
   permission   Permission @relation(fields: [permissionId], references: [id])
   role         Role       @relation(fields: [roleId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@index([roleId, permissionId])
+  @@map("roles_permissions")
 }
 
 enum Method {

@@ -1,4 +1,5 @@
-import { ApiAuth } from '@/common/decorators';
+import { ApiAuth, Query } from '@/common/decorators';
+import { IQuery } from '@/common/interfaces';
 import {
   Body,
   Controller,
@@ -22,8 +23,8 @@ export class PermissionController {
   }
 
   @Get()
-  findAll() {
-    return this.permissionService.findAll();
+  findAll(@Query() query: IQuery) {
+    return this.permissionService.findAll(query);
   }
 
   @Get(':id')

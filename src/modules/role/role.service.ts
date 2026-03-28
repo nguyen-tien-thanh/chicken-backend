@@ -1,6 +1,10 @@
 import { Pagination } from '@/common/dtos';
 import { IQuery } from '@/common/interfaces';
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoleDto, UpdateRoleDto } from './role.dto';
 
@@ -8,8 +12,27 @@ import { CreateRoleDto, UpdateRoleDto } from './role.dto';
 export class RoleService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(dto: CreateRoleDto) {
-    return this.prisma.role.create({ data: dto });
+  async create(dto: CreateRoleDto) {
+    const existingRole = await this.prisma.role.findFirst({
+      where: { name: dto.name },
+    });
+
+    if (existingRole) throw new ConflictException('Vai trò đã tồn tại');
+
+    const role = await this.prisma.role.create({
+      data: {
+        name: dto.name,
+        description: dto.description,
+        rolePermissions: {
+          create: dto.permissionIds?.map((permissionId) => ({
+            permission: { connect: { id: permissionId } },
+          })),
+        },
+      },
+      include: { rolePermissions: { include: { permission: true } } },
+    });
+
+    return role;
   }
 
   async findAll(query: IQuery) {
@@ -33,15 +56,36 @@ export class RoleService {
     });
   }
 
-  findOne(id: string) {
-    return this.prisma.role.findUnique({ where: { id } });
+  async findOne(id: string) {
+    const role = await this.prisma.role.findUnique({ where: { id } });
+    if (!role) throw new NotFoundException('Vai trò không tồn tại');
+    return role;
   }
 
-  update(id: string, dto: UpdateRoleDto) {
-    return this.prisma.role.update({ where: { id }, data: dto });
+  async update(id: string, dto: UpdateRoleDto) {
+    await this.findOne(id);
+
+    const role = await this.prisma.role.update({
+      where: { id },
+      data: {
+        name: dto.name,
+        description: dto.description,
+
+        rolePermissions: {
+          deleteMany: {},
+          create: dto.permissionIds?.map((permissionId) => ({
+            permission: { connect: { id: permissionId } },
+          })),
+        },
+      },
+      include: { rolePermissions: { include: { permission: true } } },
+    });
+
+    return role;
   }
 
-  remove(id: string) {
+  async remove(id: string) {
+    await this.findOne(id);
     return this.prisma.role.delete({ where: { id } });
   }
 }

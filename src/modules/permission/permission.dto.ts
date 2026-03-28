@@ -8,10 +8,14 @@ export class CreatePermissionDto {
   @IsNotEmpty()
   path: string;
 
-  @ApiProperty({ description: 'Permission method' })
+  @ApiProperty({
+    description: 'Permission method',
+    enum: Method,
+    default: Method.GET,
+  })
   @IsEnum(Method)
   @IsNotEmpty()
-  method: Method;
+  method: Method = Method.GET;
 
   @ApiProperty({ description: 'Permission description', required: false })
   @IsString()

@@ -3,7 +3,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
-import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import envConfig from './config/env.config';
@@ -14,18 +13,6 @@ import { RoleModule } from './modules/role/role.module';
 
 @Module({
   imports: [
-    LoggerModule.forRoot({
-      pinoHttp: {
-        level: 'debug',
-        transport: {
-          target: 'pino-pretty',
-          options: {
-            ignore: 'req.headers,res.headers',
-            singleLine: process.env.NODE_ENV == 'production',
-          },
-        },
-      },
-    }),
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, load: [envConfig] }),
     CacheModule.register({ isGlobal: true }),

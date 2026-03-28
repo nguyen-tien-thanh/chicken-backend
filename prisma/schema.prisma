@@ -20,32 +20,33 @@ model User {
 }
 
 model Role {
-  id              String           @id @default(uuid())
-  name            String           @unique
-  description     String?
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
-  rolePermissions RolePermission[]
-  users           User[]
+  id               String             @id @default(uuid())
+  name             String             @unique
+  description      String?
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  rolesPermissions RolesPermissions[]
+  users            User[]
 
   @@map("roles")
 }
 
 model Permission {
-  id              String           @id @default(uuid())
-  path            String
-  method          Method
-  description     String?
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
-  rolePermissions RolePermission[]
+  id               String             @id @default(uuid())
+  path             String
+  method           Method
+  description      String?
+  default          Boolean            @default(false)
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  rolesPermissions RolesPermissions[]
 
   @@unique([path, method])
   @@index([path, method])
   @@map("permissions")
 }
 
-model RolePermission {
+model RolesPermissions {
   id           String     @id @default(uuid())
   roleId       String
   permissionId String

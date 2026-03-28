@@ -23,13 +23,13 @@ export class RoleService {
       data: {
         name: dto.name,
         description: dto.description,
-        rolePermissions: {
+        rolesPermissions: {
           create: dto.permissionIds?.map((permissionId) => ({
             permission: { connect: { id: permissionId } },
           })),
         },
       },
-      include: { rolePermissions: { include: { permission: true } } },
+      include: { rolesPermissions: { include: { permission: true } } },
     });
 
     return role;
@@ -71,14 +71,14 @@ export class RoleService {
         name: dto.name,
         description: dto.description,
 
-        rolePermissions: {
+        rolesPermissions: {
           deleteMany: {},
           create: dto.permissionIds?.map((permissionId) => ({
             permission: { connect: { id: permissionId } },
           })),
         },
       },
-      include: { rolePermissions: { include: { permission: true } } },
+      include: { rolesPermissions: { include: { permission: true } } },
     });
 
     return role;

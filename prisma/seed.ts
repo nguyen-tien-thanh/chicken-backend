@@ -1,5 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@prisma/client';
+import { Method, PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import 'dotenv/config';
 
@@ -13,6 +13,10 @@ const prisma = new PrismaClient({
 async function main() {
   await prisma.user.deleteMany();
   await prisma.role.deleteMany();
+
+  const permissions = await prisma.permission.createManyAndReturn({
+    data: [{ path: '*', method: Method.GET, default: true }],
+  });
 
   const roles = await prisma.role.createManyAndReturn({
     data: [
@@ -29,6 +33,15 @@ async function main() {
         description: 'User role',
       },
     ],
+    skipDuplicates: true,
+  });
+
+  const adminRole = roles.find((r) => r.name === 'ADMIN');
+  await prisma.rolesPermissions.createMany({
+    data: permissions.map((p) => ({
+      roleId: adminRole!.id,
+      permissionId: p.id,
+    })),
     skipDuplicates: true,
   });
 

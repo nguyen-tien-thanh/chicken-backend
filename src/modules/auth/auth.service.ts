@@ -21,6 +21,22 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: loginDto.email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        role: {
+          select: {
+            rolesPermissions: {
+              select: {
+                permission: {
+                  select: { id: true, path: true, method: true },
+                },
+              },
+            },
+          },
+        },
+      },
     });
     if (!user) throw new UnauthorizedException('Email không tồn tại');
 
@@ -31,12 +47,13 @@ export class AuthService {
     if (!isPasswordValid)
       throw new UnauthorizedException('Mật khẩu không chính xác');
 
+    const { password, ...userWithoutPassword } = user;
     const token = await this.jwt.signAsync(
-      { id: user.id },
+      { ...userWithoutPassword },
       { secret: this.config.get('jwt.secret') },
     );
 
-    return { user, token };
+    return { user: userWithoutPassword, token };
   }
 
   async register(registerDto: RegisterDto) {
@@ -70,6 +87,15 @@ export class AuthService {
         name: true,
         createdAt: true,
         updatedAt: true,
+        role: {
+          select: {
+            rolesPermissions: {
+              select: {
+                permission: { select: { id: true, path: true, method: true } },
+              },
+            },
+          },
+        },
       },
     });
   }

@@ -19,7 +19,7 @@ export class AuthService {
   ) {}
 
   async login(loginDto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: { email: loginDto.email },
       select: {
         id: true,
@@ -79,7 +79,7 @@ export class AuthService {
   }
 
   async profile(user: User) {
-    return this.prisma.user.findUnique({
+    return this.prisma.user.findFirst({
       where: { id: user.id },
       select: {
         id: true,

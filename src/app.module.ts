@@ -17,6 +17,7 @@ import { PurchaseItemModule } from './modules/purchase-item/purchase-item.module
 import { PurchaseModule } from './modules/purchase/purchase.module';
 import { RoleModule } from './modules/role/role.module';
 import { SupplierModule } from './modules/supplier/supplier.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { SupplierModule } from './modules/supplier/supplier.module';
     PurchaseModule,
     PurchaseItemModule,
     InventoryTransactionModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [

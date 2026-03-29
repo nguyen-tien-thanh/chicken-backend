@@ -68,6 +68,7 @@ model Customer {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
+  sales     Sale[]
 
   @@map("customers")
 }
@@ -141,6 +142,7 @@ model Product {
   inventoryTransactions InventoryTransaction[]
   category              ProductCategory        @relation(fields: [categoryId], references: [id])
   purchaseItems         PurchaseItem[]
+  saleItems             SaleItem[]
 
   @@map("products")
 }
@@ -162,6 +164,52 @@ model InventoryTransaction {
   product         Product                       @relation(fields: [productId], references: [id])
 
   @@map("inventory_transactions")
+}
+
+model Sale {
+  id              String     @id @default(uuid())
+  saleDate        DateTime   @map("sale_date")
+  subtotalAmount  Float      @map("subtotal_amount")
+  discountAmount  Float      @map("discount_amount")
+  finalAmount     Float      @map("final_amount")
+  paidAmount      Float      @map("paid_amount")
+  remainingAmount Float      @map("remaining_amount")
+  status          SaleStatus @map("status")
+  note            String?    @map("note")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  deletedAt       DateTime?  @map("deleted_at")
+  customerId      String     @map("customer_id")
+  saleItems       SaleItem[]
+  customer        Customer   @relation(fields: [customerId], references: [id])
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id           String    @id @default(uuid())
+  quantity     Float     @map("quantity")
+  quantityUnit String    @map("quantity_unit")
+  unitPrice    Float     @map("unit_price")
+  amount       Float     @map("amount")
+  costAmount   Float     @map("cost_amount")
+  profitAmount Float     @map("profit_amount")
+  note         String?   @map("note")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+  saleId       String    @map("sale_id")
+  productId    String    @map("product_id")
+  product      Product   @relation(fields: [productId], references: [id])
+  sale         Sale      @relation(fields: [saleId], references: [id])
+
+  @@map("sale_items")
+}
+
+enum SaleStatus {
+  PENDING
+  PAID
+  CANCELLED
 }
 
 enum InventoryTransactionType {

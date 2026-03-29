@@ -18,6 +18,8 @@ import { PurchaseModule } from './modules/purchase/purchase.module';
 import { RoleModule } from './modules/role/role.module';
 import { SupplierModule } from './modules/supplier/supplier.module';
 import { UserModule } from './modules/user/user.module';
+import { SaleModule } from './modules/sale/sale.module';
+import { SaleItemModule } from './modules/sale-item/sale-item.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { UserModule } from './modules/user/user.module';
     PurchaseItemModule,
     InventoryTransactionModule,
     UserModule,
+    SaleModule,
+    SaleItemModule,
   ],
   controllers: [AppController],
   providers: [

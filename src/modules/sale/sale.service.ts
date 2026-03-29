@@ -2,21 +2,32 @@ import { Pagination } from '@/common/dtos';
 import { IQuery, IQueryOne } from '@/common/interfaces';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { InventoryLedgerService } from '../inventory-transaction/inventory-ledger.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSaleDto, UpdateSaleDto } from './sale.dto';
 
+type DbClient = Prisma.TransactionClient | PrismaService;
+
 @Injectable()
 export class SaleService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ledger: InventoryLedgerService,
+  ) {}
+
+  private client(tx?: DbClient): DbClient {
+    return tx ?? this.prisma;
+  }
 
   /** Cập nhật subtotal / final / remaining từ các dòng chi tiết và giảm giá / đã thu hiện có trên đơn. */
-  async recalcSaleTotals(saleId: string) {
-    const sale = await this.prisma.sale.findFirst({
+  async recalcSaleTotals(saleId: string, tx?: DbClient) {
+    const db = this.client(tx);
+    const sale = await db.sale.findFirst({
       where: { id: saleId, deletedAt: null },
     });
     if (!sale) return;
 
-    const agg = await this.prisma.saleItem.aggregate({
+    const agg = await db.saleItem.aggregate({
       where: { saleId, deletedAt: null },
       _sum: { amount: true },
     });
@@ -24,7 +35,7 @@ export class SaleService {
     const finalAmount = subtotalAmount - sale.discountAmount;
     const remainingAmount = finalAmount - sale.paidAmount;
 
-    await this.prisma.sale.update({
+    await db.sale.update({
       where: { id: saleId },
       data: { subtotalAmount, finalAmount, remainingAmount },
     });
@@ -70,7 +81,15 @@ export class SaleService {
     const remainingAmount = finalAmount - paidAmount;
 
     return this.prisma.$transaction(async (tx) => {
-      return tx.sale.create({
+      await this.ledger.assertSaleLinesAvailable(
+        itemsData.map((i) => ({
+          productId: i.productId,
+          quantityUnit: i.quantityUnit,
+          quantity: i.quantity,
+        })),
+      );
+
+      const created = await tx.sale.create({
         data: {
           saleDate: dto.saleDate,
           customerId: dto.customerId,
@@ -85,6 +104,12 @@ export class SaleService {
         },
         include: { saleItems: true, customer: true },
       });
+
+      for (const si of created.saleItems) {
+        await this.ledger.syncSaleLineOut(si, dto.saleDate, dto.note);
+      }
+
+      return created;
     });
   }
 
@@ -168,9 +193,12 @@ export class SaleService {
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.sale.update({
-      where: { id },
-      data: { deletedAt: new Date() },
+    return this.prisma.$transaction(async (tx) => {
+      await this.ledger.removeSaleInventoryForSale(id);
+      return tx.sale.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
     });
   }
 }

@@ -2,12 +2,16 @@ import { Pagination } from '@/common/dtos';
 import { IQuery, IQueryOne } from '@/common/interfaces';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { InventoryLedgerService } from '../inventory-transaction/inventory-ledger.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePurchaseDto, UpdatePurchaseDto } from './purchase.dto';
 
 @Injectable()
 export class PurchaseService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ledger: InventoryLedgerService,
+  ) {}
 
   async create(dto: CreatePurchaseDto) {
     const supplier = await this.prisma.supplier.findFirst({
@@ -40,7 +44,7 @@ export class PurchaseService {
     const totalAmount = itemsData.reduce((s, i) => s + i.amount, 0);
 
     return this.prisma.$transaction(async (tx) => {
-      return tx.purchase.create({
+      const created = await tx.purchase.create({
         data: {
           purchaseDate: dto.purchaseDate,
           supplierId: dto.supplierId,
@@ -50,6 +54,10 @@ export class PurchaseService {
         },
         include: { purchaseItems: true, supplier: true },
       });
+      for (const pi of created.purchaseItems) {
+        await this.ledger.syncPurchaseLineIn(pi, dto.purchaseDate, dto.note);
+      }
+      return created;
     });
   }
 
@@ -112,9 +120,12 @@ export class PurchaseService {
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.purchase.update({
-      where: { id },
-      data: { deletedAt: new Date() },
+    return this.prisma.$transaction(async (tx) => {
+      await this.ledger.removePurchaseInventoryForPurchase(id);
+      return tx.purchase.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
     });
   }
 }

@@ -1,63 +1,71 @@
 import { Pagination } from '@/common/dtos';
 import { IQuery, IQueryOne } from '@/common/interfaces';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InventoryTransactionType, Prisma } from '@prisma/client';
+import { InventoryLedgerService } from '../inventory-transaction/inventory-ledger.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreatePurchaseItemDto,
   UpdatePurchaseItemDto,
 } from './purchase-item.dto';
 
+type DbClient = Prisma.TransactionClient | PrismaService;
+
 @Injectable()
 export class PurchaseItemService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ledger: InventoryLedgerService,
+  ) {}
 
-  private async recalcPurchaseTotal(purchaseId: string) {
-    const agg = await this.prisma.purchaseItem.aggregate({
+  private async recalcPurchaseTotal(tx: DbClient, purchaseId: string) {
+    const agg = await tx.purchaseItem.aggregate({
       where: { purchaseId, deletedAt: null },
       _sum: { amount: true },
     });
-    await this.prisma.purchase.update({
+    await tx.purchase.update({
       where: { id: purchaseId },
       data: { totalAmount: agg._sum.amount ?? 0 },
     });
   }
 
-  private async ensurePurchaseActive(purchaseId: string) {
-    const purchase = await this.prisma.purchase.findFirst({
-      where: { id: purchaseId, deletedAt: null },
-    });
-    if (!purchase) {
-      throw new NotFoundException('Đơn nhập hàng không tồn tại');
-    }
-  }
-
-  private async ensureProductActive(productId: string) {
-    const product = await this.prisma.product.findFirst({
-      where: { id: productId, deletedAt: null },
-    });
-    if (!product) {
-      throw new NotFoundException('Sản phẩm không tồn tại');
-    }
-  }
-
   async create(dto: CreatePurchaseItemDto) {
-    await this.ensurePurchaseActive(dto.purchaseId);
-    await this.ensureProductActive(dto.productId);
-    const amount = dto.amount ?? dto.quantity * dto.unitPrice;
-    const row = await this.prisma.purchaseItem.create({
-      data: {
-        purchaseId: dto.purchaseId,
-        productId: dto.productId,
-        quantity: dto.quantity,
-        quantityUnit: dto.quantityUnit,
-        unitPrice: dto.unitPrice,
-        amount,
-        avgWeightPerUnit: dto.avgWeightPerUnit,
-        note: dto.note,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const purchase = await tx.purchase.findFirst({
+        where: { id: dto.purchaseId, deletedAt: null },
+      });
+      if (!purchase) {
+        throw new NotFoundException('Đơn nhập hàng không tồn tại');
+      }
+      const product = await tx.product.findFirst({
+        where: { id: dto.productId, deletedAt: null },
+      });
+      if (!product) {
+        throw new NotFoundException('Sản phẩm không tồn tại');
+      }
+
+      const amount = dto.amount ?? dto.quantity * dto.unitPrice;
+      const row = await tx.purchaseItem.create({
+        data: {
+          purchaseId: dto.purchaseId,
+          productId: dto.productId,
+          quantity: dto.quantity,
+          quantityUnit: dto.quantityUnit,
+          unitPrice: dto.unitPrice,
+          amount,
+          avgWeightPerUnit: dto.avgWeightPerUnit,
+          note: dto.note,
+        },
+      });
+
+      await this.ledger.syncPurchaseLineIn(
+        row,
+        purchase.purchaseDate,
+        purchase.note,
+      );
+      await this.recalcPurchaseTotal(tx, dto.purchaseId);
+      return row;
     });
-    await this.recalcPurchaseTotal(dto.purchaseId);
-    return row;
   }
 
   async findAll(query: IQuery) {
@@ -94,54 +102,92 @@ export class PurchaseItemService {
   }
 
   async update(id: string, dto: UpdatePurchaseItemDto) {
-    const existing = await this.findOne(id);
-    if (dto.purchaseId !== undefined) {
-      await this.ensurePurchaseActive(dto.purchaseId);
-    }
-    if (dto.productId !== undefined) {
-      await this.ensureProductActive(dto.productId);
-    }
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await tx.purchaseItem.findFirst({
+        where: { id, deletedAt: null },
+      });
+      if (!existing) {
+        throw new NotFoundException('Dòng đơn nhập không tồn tại');
+      }
+      if (dto.purchaseId !== undefined) {
+        const p = await tx.purchase.findFirst({
+          where: { id: dto.purchaseId, deletedAt: null },
+        });
+        if (!p) {
+          throw new NotFoundException('Đơn nhập hàng không tồn tại');
+        }
+      }
+      if (dto.productId !== undefined) {
+        const product = await tx.product.findFirst({
+          where: { id: dto.productId, deletedAt: null },
+        });
+        if (!product) {
+          throw new NotFoundException('Sản phẩm không tồn tại');
+        }
+      }
 
-    const quantity = dto.quantity ?? existing.quantity;
-    const unitPrice = dto.unitPrice ?? existing.unitPrice;
-    const amount = dto.amount !== undefined ? dto.amount : quantity * unitPrice;
+      const quantity = dto.quantity ?? existing.quantity;
+      const unitPrice = dto.unitPrice ?? existing.unitPrice;
+      const amount =
+        dto.amount !== undefined ? dto.amount : quantity * unitPrice;
 
-    const row = await this.prisma.purchaseItem.update({
-      where: { id },
-      data: {
-        ...(dto.purchaseId !== undefined && { purchaseId: dto.purchaseId }),
-        ...(dto.productId !== undefined && { productId: dto.productId }),
-        ...(dto.quantity !== undefined && { quantity: dto.quantity }),
-        ...(dto.quantityUnit !== undefined && {
-          quantityUnit: dto.quantityUnit,
-        }),
-        ...(dto.unitPrice !== undefined && { unitPrice: dto.unitPrice }),
-        amount,
-        ...(dto.avgWeightPerUnit !== undefined && {
-          avgWeightPerUnit: dto.avgWeightPerUnit,
-        }),
-        ...(dto.note !== undefined && { note: dto.note }),
-      },
+      const row = await tx.purchaseItem.update({
+        where: { id },
+        data: {
+          ...(dto.purchaseId !== undefined && { purchaseId: dto.purchaseId }),
+          ...(dto.productId !== undefined && { productId: dto.productId }),
+          ...(dto.quantity !== undefined && { quantity: dto.quantity }),
+          ...(dto.quantityUnit !== undefined && {
+            quantityUnit: dto.quantityUnit,
+          }),
+          ...(dto.unitPrice !== undefined && { unitPrice: dto.unitPrice }),
+          amount,
+          ...(dto.avgWeightPerUnit !== undefined && {
+            avgWeightPerUnit: dto.avgWeightPerUnit,
+          }),
+          ...(dto.note !== undefined && { note: dto.note }),
+        },
+      });
+
+      const purchase = await tx.purchase.findFirst({
+        where: { id: row.purchaseId, deletedAt: null },
+      });
+      if (!purchase) {
+        throw new NotFoundException('Đơn nhập hàng không tồn tại');
+      }
+      await this.ledger.syncPurchaseLineIn(
+        row,
+        purchase.purchaseDate,
+        purchase.note,
+      );
+
+      await this.recalcPurchaseTotal(tx, existing.purchaseId);
+      if (
+        dto.purchaseId !== undefined &&
+        dto.purchaseId !== existing.purchaseId
+      ) {
+        await this.recalcPurchaseTotal(tx, dto.purchaseId);
+      }
+      return row;
     });
-
-    await this.recalcPurchaseTotal(existing.purchaseId);
-    if (
-      dto.purchaseId !== undefined &&
-      dto.purchaseId !== existing.purchaseId
-    ) {
-      await this.recalcPurchaseTotal(dto.purchaseId);
-    }
-    return row;
   }
 
   async remove(id: string) {
-    const row = await this.findOne(id);
-    const purchaseId = row.purchaseId;
-    const updated = await this.prisma.purchaseItem.update({
-      where: { id },
-      data: { deletedAt: new Date() },
+    return this.prisma.$transaction(async (tx) => {
+      const row = await tx.purchaseItem.findFirst({
+        where: { id, deletedAt: null },
+      });
+      if (!row) {
+        throw new NotFoundException('Dòng đơn nhập không tồn tại');
+      }
+      const purchaseId = row.purchaseId;
+      await this.ledger.removeByRef(InventoryTransactionType.PURCHASE, id);
+      const updated = await tx.purchaseItem.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
+      await this.recalcPurchaseTotal(tx, purchaseId);
+      return updated;
     });
-    await this.recalcPurchaseTotal(purchaseId);
-    return updated;
   }
 }

@@ -1,3 +1,4 @@
+import { Query } from '@/common/decorators';
 import { IQuery, IQueryOne } from '@/common/interfaces';
 import {
   Body,
@@ -7,7 +8,6 @@ import {
   Param,
   Patch,
   Post,
-  Query,
 } from '@nestjs/common';
 import {
   CreateProductCategoryDto,

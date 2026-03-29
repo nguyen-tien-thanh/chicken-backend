@@ -30,7 +30,6 @@ export const Query = createParamDecorator(
     Object.keys(query).forEach((key) => {
       if (
         query[key] === undefined ||
-        query[key] === null ||
         (Array.isArray(query[key]) && query[key].length === 0) ||
         (typeof query[key] === 'object' && Object.keys(query[key]).length === 0)
       ) {

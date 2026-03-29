@@ -12,7 +12,7 @@ import {
 import { CreateCustomerDto, UpdateCustomerDto } from './customer.dto';
 import { CustomerService } from './customer.service';
 
-@Controller('customer')
+@Controller('customers')
 export class CustomerController {
   constructor(private readonly customerService: CustomerService) {}
 

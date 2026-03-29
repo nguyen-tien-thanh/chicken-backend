@@ -25,7 +25,7 @@ export class InventoryTransactionService {
     const { take = 10, skip } = query;
     const [rows, total] = await Promise.all([
       this.prisma.inventoryTransaction.findMany({
-        orderBy: { updatedAt: 'desc' },
+        orderBy: { transactionDate: 'desc' },
         ...query,
       }),
       this.prisma.inventoryTransaction.count({

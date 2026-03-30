@@ -1,7 +1,7 @@
 import { Pagination } from '@/common/dtos';
 import { IQuery, IQueryOne } from '@/common/interfaces';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { InventoryTransactionType, Prisma } from '@prisma/client';
 import { InventoryLedgerService } from '../inventory-transaction/inventory-ledger.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSaleDto, UpdateSaleDto } from './sale.dto';
@@ -147,48 +147,137 @@ export class SaleService {
   }
 
   async update(id: string, dto: UpdateSaleDto) {
-    const existing = await this.findOne(id);
-    const data: Prisma.SaleUpdateInput = {};
+    const existing = await this.findOne(id, {
+      include: { saleItems: { where: { deletedAt: null } } },
+    });
 
-    if (dto.saleDate !== undefined) {
-      data.saleDate = dto.saleDate;
-    }
-    if (dto.customerId !== undefined) {
-      const customer = await this.prisma.customer.findFirst({
-        where: { id: dto.customerId, deletedAt: null },
-      });
-      if (!customer) {
-        throw new NotFoundException('Khách hàng không tồn tại');
+    return this.prisma.$transaction(async (tx) => {
+      const data: Prisma.SaleUpdateInput = {};
+
+      if (dto.saleDate !== undefined) data.saleDate = dto.saleDate;
+      if (dto.note !== undefined) data.note = dto.note;
+      if (dto.status !== undefined) data.status = dto.status;
+      if (dto.customerId !== undefined) {
+        const customer = await this.prisma.customer.findFirst({
+          where: { id: dto.customerId, deletedAt: null },
+        });
+        if (!customer) throw new NotFoundException('Khách hàng không tồn tại');
+        data.customer = { connect: { id: dto.customerId } };
       }
-      data.customer = { connect: { id: dto.customerId } };
-    }
-    if (dto.note !== undefined) {
-      data.note = dto.note;
-    }
-    if (dto.status !== undefined) {
-      data.status = dto.status;
-    }
 
-    const discountAmount =
-      dto.discountAmount !== undefined
-        ? dto.discountAmount
-        : existing.discountAmount;
-    const paidAmount =
-      dto.paidAmount !== undefined ? dto.paidAmount : existing.paidAmount;
+      // --- update items ---
+      if (dto.items !== undefined) {
+        const productIds = [...new Set(dto.items.map((i) => i.productId))];
+        const products = await this.prisma.product.findMany({
+          where: { id: { in: productIds }, deletedAt: null },
+        });
+        if (products.length !== productIds.length) {
+          throw new NotFoundException('Một hoặc nhiều sản phẩm không tồn tại');
+        }
 
-    if (dto.discountAmount !== undefined || dto.paidAmount !== undefined) {
-      data.discountAmount = discountAmount;
-      data.paidAmount = paidAmount;
-      const subtotal = existing.subtotalAmount;
-      data.finalAmount = subtotal - discountAmount;
-      data.remainingAmount = subtotal - discountAmount - paidAmount;
-    }
+        const saleDate = dto.saleDate ?? (existing as any).saleDate;
+        const note = dto.note !== undefined ? dto.note : (existing as any).note;
 
-    if (Object.keys(data).length === 0) {
-      return this.findOne(id);
-    }
+        const incomingIds = new Set(
+          dto.items.filter((i) => i.id).map((i) => i.id!),
+        );
+        const existingItems: Array<{ id: string }> = (existing as any).saleItems ?? [];
 
-    return this.prisma.sale.update({ where: { id }, data });
+        // soft-delete items not in incoming list
+        for (const ei of existingItems.filter((ei) => !incomingIds.has(ei.id))) {
+          await this.ledger.removeByRef(InventoryTransactionType.SALE, ei.id);
+          await tx.saleItem.update({
+            where: { id: ei.id },
+            data: { deletedAt: new Date() },
+          });
+        }
+
+        // build new items list, check stock excluding current items being replaced
+        const newLines = dto.items.map((item) => {
+          const amount = item.amount ?? item.quantity * item.unitPrice;
+          const costAmount = item.costAmount ?? 0;
+          return {
+            id: item.id,
+            productId: item.productId,
+            quantity: item.quantity,
+            quantityUnit: item.quantityUnit,
+            unitPrice: item.unitPrice,
+            amount,
+            costAmount,
+            profitAmount: amount - costAmount,
+            note: item.note,
+          };
+        });
+
+        // Remove ledger for all existing items first (they'll be re-synced)
+        for (const ei of existingItems.filter((ei) => incomingIds.has(ei.id))) {
+          await this.ledger.removeByRef(InventoryTransactionType.SALE, ei.id);
+        }
+
+        // Assert stock availability for all new lines
+        await this.ledger.assertSaleLinesAvailable(
+          newLines.map((l) => ({
+            productId: l.productId,
+            quantityUnit: l.quantityUnit,
+            quantity: l.quantity,
+          })),
+        );
+
+        const savedItems: Array<{
+          id: string;
+          productId: string;
+          quantity: number;
+          quantityUnit: string;
+          costAmount: number;
+          note?: string | null;
+        }> = [];
+
+        for (const line of newLines) {
+          const { id: lineId, profitAmount, ...lineData } = line;
+          if (lineId) {
+            const updated = await tx.saleItem.update({
+              where: { id: lineId },
+              data: { ...lineData, profitAmount },
+            });
+            savedItems.push(updated);
+          } else {
+            const created = await tx.saleItem.create({
+              data: { saleId: id, ...lineData, profitAmount },
+            });
+            savedItems.push(created);
+          }
+        }
+
+        for (const si of savedItems) {
+          await this.ledger.syncSaleLineOut(si, saleDate, note);
+        }
+      }
+
+      // --- recalc totals ---
+      const discountAmount =
+        dto.discountAmount !== undefined
+          ? dto.discountAmount
+          : (existing as any).discountAmount;
+      const paidAmount =
+        dto.paidAmount !== undefined ? dto.paidAmount : (existing as any).paidAmount;
+
+      if (dto.discountAmount !== undefined || dto.paidAmount !== undefined || dto.items !== undefined) {
+        data.discountAmount = discountAmount;
+        data.paidAmount = paidAmount;
+        // subtotal will be recalculated via recalcSaleTotals after update
+      }
+
+      if (Object.keys(data).length > 0) {
+        await tx.sale.update({ where: { id }, data });
+      }
+
+      await this.recalcSaleTotals(id, tx);
+
+      return tx.sale.findFirst({
+        where: { id },
+        include: { saleItems: { where: { deletedAt: null } }, customer: true },
+      });
+    });
   }
 
   async remove(id: string) {

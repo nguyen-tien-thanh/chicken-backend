@@ -81,6 +81,47 @@ export class CreatePurchaseDto {
   items: CreatePurchaseItemLineDto[];
 }
 
+export class UpdatePurchaseItemLineDto {
+  @ApiPropertyOptional({ description: 'ID dòng hiện có để update; bỏ trống = tạo mới' })
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  productId: string;
+
+  @ApiProperty()
+  @IsNumber()
+  quantity: number;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  quantityUnit: string;
+
+  @ApiProperty()
+  @IsNumber()
+  unitPrice: number;
+
+  @ApiPropertyOptional({
+    description: 'Nếu bỏ trống = quantity * unitPrice',
+  })
+  @IsOptional()
+  @IsNumber()
+  amount?: number;
+
+  @ApiProperty()
+  @IsNumber()
+  avgWeightPerUnit: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
 export class UpdatePurchaseDto {
   @ApiPropertyOptional()
   @Type(() => Date)
@@ -112,4 +153,14 @@ export class UpdatePurchaseDto {
   @IsOptional()
   @IsString()
   note?: string | null;
+
+  @ApiPropertyOptional({
+    type: [UpdatePurchaseItemLineDto],
+    description: 'Danh sách items mới. Items có id → update, không có id → tạo mới, items cũ không có trong list → xóa',
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => UpdatePurchaseItemLineDto)
+  @ArrayMinSize(1)
+  items?: UpdatePurchaseItemLineDto[];
 }

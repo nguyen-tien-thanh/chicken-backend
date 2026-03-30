@@ -1,7 +1,7 @@
 import { Pagination } from '@/common/dtos';
 import { IQuery, IQueryOne } from '@/common/interfaces';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { InventoryTransactionType, Prisma } from '@prisma/client';
 import { InventoryLedgerService } from '../inventory-transaction/inventory-ledger.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePurchaseDto, UpdatePurchaseDto } from './purchase.dto';
@@ -98,37 +98,110 @@ export class PurchaseService {
   }
 
   async update(id: string, dto: UpdatePurchaseDto) {
-    await this.findOne(id);
-    const data: Prisma.PurchaseUpdateInput = {};
-    if (dto.purchaseDate !== undefined) {
-      data.purchaseDate = dto.purchaseDate;
-    }
-    if (dto.supplierId !== undefined) {
-      const supplier = await this.prisma.supplier.findFirst({
-        where: { id: dto.supplierId, deletedAt: null },
-      });
-      if (!supplier) {
-        throw new NotFoundException('Nhà cung cấp không tồn tại');
-      }
-      data.supplier = { connect: { id: dto.supplierId } };
-    }
-    if (dto.note !== undefined) {
-      data.note = dto.note;
-    }
-    if (dto.cagesCount !== undefined) {
-      data.cagesCount = dto.cagesCount;
-    }
-    if (dto.cagesWeight !== undefined) {
-      data.cagesWeight = dto.cagesWeight;
-    }
-    if (dto.averageWeight !== undefined) {
-      data.averageWeight = dto.averageWeight;
-    }
+    const existing = await this.findOne(id, {
+      include: { purchaseItems: { where: { deletedAt: null } } },
+    });
 
-    if (Object.keys(data).length === 0) {
-      return this.findOne(id);
-    }
-    return this.prisma.purchase.update({ where: { id }, data });
+    return this.prisma.$transaction(async (tx) => {
+      // --- update header fields ---
+      const data: Prisma.PurchaseUpdateInput = {};
+      if (dto.purchaseDate !== undefined) data.purchaseDate = dto.purchaseDate;
+      if (dto.note !== undefined) data.note = dto.note;
+      if (dto.cagesCount !== undefined) data.cagesCount = dto.cagesCount;
+      if (dto.cagesWeight !== undefined) data.cagesWeight = dto.cagesWeight;
+      if (dto.averageWeight !== undefined) data.averageWeight = dto.averageWeight;
+      if (dto.supplierId !== undefined) {
+        const supplier = await this.prisma.supplier.findFirst({
+          where: { id: dto.supplierId, deletedAt: null },
+        });
+        if (!supplier) throw new NotFoundException('Nhà cung cấp không tồn tại');
+        data.supplier = { connect: { id: dto.supplierId } };
+      }
+
+      // --- update items ---
+      if (dto.items !== undefined) {
+        const productIds = [...new Set(dto.items.map((i) => i.productId))];
+        const products = await this.prisma.product.findMany({
+          where: { id: { in: productIds }, deletedAt: null },
+        });
+        if (products.length !== productIds.length) {
+          throw new NotFoundException('Một hoặc nhiều sản phẩm không tồn tại');
+        }
+
+        const purchaseDate =
+          dto.purchaseDate ?? (existing as any).purchaseDate;
+        const note = dto.note !== undefined ? dto.note : (existing as any).note;
+
+        const incomingIds = new Set(
+          dto.items.filter((i) => i.id).map((i) => i.id!),
+        );
+        const existingItems: Array<{ id: string }> = (existing as any).purchaseItems ?? [];
+
+        // soft-delete items not in incoming list
+        const toDelete = existingItems.filter((ei) => !incomingIds.has(ei.id));
+        for (const ei of toDelete) {
+          await this.ledger.removeByRef(InventoryTransactionType.PURCHASE, ei.id);
+          await tx.purchaseItem.update({
+            where: { id: ei.id },
+            data: { deletedAt: new Date() },
+          });
+        }
+
+        const savedItems: Array<{
+          id: string;
+          productId: string;
+          quantity: number;
+          quantityUnit: string;
+          unitPrice: number;
+          amount: number;
+          note?: string | null;
+        }> = [];
+
+        for (const item of dto.items) {
+          const amount = item.amount ?? item.quantity * item.unitPrice;
+          const itemData = {
+            productId: item.productId,
+            quantity: item.quantity,
+            quantityUnit: item.quantityUnit,
+            unitPrice: item.unitPrice,
+            amount,
+            avgWeightPerUnit: item.avgWeightPerUnit,
+            note: item.note,
+          };
+
+          if (item.id) {
+            const updated = await tx.purchaseItem.update({
+              where: { id: item.id },
+              data: itemData,
+            });
+            savedItems.push(updated);
+          } else {
+            const created = await tx.purchaseItem.create({
+              data: { purchaseId: id, ...itemData },
+            });
+            savedItems.push(created);
+          }
+        }
+
+        // sync ledger for all updated/created items
+        for (const pi of savedItems) {
+          await this.ledger.syncPurchaseLineIn(pi, purchaseDate, note);
+        }
+
+        // recalc totalAmount
+        const totalAmount = savedItems.reduce((s, i) => s + i.amount, 0);
+        data.totalAmount = totalAmount;
+      }
+
+      if (Object.keys(data).length === 0) {
+        return this.findOne(id);
+      }
+      return tx.purchase.update({
+        where: { id },
+        data,
+        include: { purchaseItems: { where: { deletedAt: null } }, supplier: true },
+      });
+    });
   }
 
   async remove(id: string) {

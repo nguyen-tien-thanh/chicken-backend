@@ -14,6 +14,52 @@ import {
 } from 'class-validator';
 import { CreateSaleItemLineDto } from '../sale-item/sale-item.dto';
 
+export class UpdateSaleItemLineDto {
+  @ApiPropertyOptional({ description: 'ID dòng hiện có để update; bỏ trống = tạo mới' })
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  productId: string;
+
+  @ApiProperty()
+  @IsNumber()
+  @Type(() => Number)
+  quantity: number;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  quantityUnit: string;
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  unitPrice: number;
+
+  @ApiPropertyOptional({ description: 'Nếu bỏ trống = quantity * unitPrice' })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  amount?: number;
+
+  @ApiPropertyOptional({ description: 'Giá vốn dòng; mặc định 0' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  costAmount?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
 export class CreateSaleDto {
   @ApiProperty()
   @Type(() => Date)
@@ -91,4 +137,14 @@ export class UpdateSaleDto {
   @IsOptional()
   @IsEnum(SaleStatus)
   status?: SaleStatus;
+
+  @ApiPropertyOptional({
+    type: [UpdateSaleItemLineDto],
+    description: 'Danh sách items mới. Items có id → update, không có id → tạo mới, items cũ không có trong list → xóa',
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateSaleItemLineDto)
+  @ArrayMinSize(1)
+  items?: UpdateSaleItemLineDto[];
 }

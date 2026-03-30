@@ -36,10 +36,6 @@ export class CreatePurchaseItemLineDto {
   @IsNumber()
   amount?: number;
 
-  @ApiProperty()
-  @IsNumber()
-  avgWeightPerUnit: number;
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -111,10 +107,6 @@ export class UpdatePurchaseItemLineDto {
   @IsOptional()
   @IsNumber()
   amount?: number;
-
-  @ApiProperty()
-  @IsNumber()
-  avgWeightPerUnit: number;
 
   @ApiPropertyOptional()
   @IsOptional()

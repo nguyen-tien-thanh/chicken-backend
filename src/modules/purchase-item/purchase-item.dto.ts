@@ -32,10 +32,6 @@ export class CreatePurchaseItemDto {
   @IsNumber()
   amount?: number;
 
-  @ApiProperty()
-  @IsNumber()
-  avgWeightPerUnit: number;
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

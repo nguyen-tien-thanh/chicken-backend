@@ -37,7 +37,6 @@ export class PurchaseService {
         quantityUnit: item.quantityUnit,
         unitPrice: item.unitPrice,
         amount,
-        avgWeightPerUnit: item.avgWeightPerUnit,
         note: item.note,
       };
     });
@@ -109,12 +108,14 @@ export class PurchaseService {
       if (dto.note !== undefined) data.note = dto.note;
       if (dto.cagesCount !== undefined) data.cagesCount = dto.cagesCount;
       if (dto.cagesWeight !== undefined) data.cagesWeight = dto.cagesWeight;
-      if (dto.averageWeight !== undefined) data.averageWeight = dto.averageWeight;
+      if (dto.averageWeight !== undefined)
+        data.averageWeight = dto.averageWeight;
       if (dto.supplierId !== undefined) {
         const supplier = await this.prisma.supplier.findFirst({
           where: { id: dto.supplierId, deletedAt: null },
         });
-        if (!supplier) throw new NotFoundException('Nhà cung cấp không tồn tại');
+        if (!supplier)
+          throw new NotFoundException('Nhà cung cấp không tồn tại');
         data.supplier = { connect: { id: dto.supplierId } };
       }
 
@@ -128,19 +129,22 @@ export class PurchaseService {
           throw new NotFoundException('Một hoặc nhiều sản phẩm không tồn tại');
         }
 
-        const purchaseDate =
-          dto.purchaseDate ?? (existing as any).purchaseDate;
+        const purchaseDate = dto.purchaseDate ?? (existing as any).purchaseDate;
         const note = dto.note !== undefined ? dto.note : (existing as any).note;
 
         const incomingIds = new Set(
           dto.items.filter((i) => i.id).map((i) => i.id!),
         );
-        const existingItems: Array<{ id: string }> = (existing as any).purchaseItems ?? [];
+        const existingItems: Array<{ id: string }> =
+          (existing as any).purchaseItems ?? [];
 
         // soft-delete items not in incoming list
         const toDelete = existingItems.filter((ei) => !incomingIds.has(ei.id));
         for (const ei of toDelete) {
-          await this.ledger.removeByRef(InventoryTransactionType.PURCHASE, ei.id);
+          await this.ledger.removeByRef(
+            InventoryTransactionType.PURCHASE,
+            ei.id,
+          );
           await tx.purchaseItem.update({
             where: { id: ei.id },
             data: { deletedAt: new Date() },
@@ -165,7 +169,6 @@ export class PurchaseService {
             quantityUnit: item.quantityUnit,
             unitPrice: item.unitPrice,
             amount,
-            avgWeightPerUnit: item.avgWeightPerUnit,
             note: item.note,
           };
 
@@ -199,7 +202,10 @@ export class PurchaseService {
       return tx.purchase.update({
         where: { id },
         data,
-        include: { purchaseItems: { where: { deletedAt: null } }, supplier: true },
+        include: {
+          purchaseItems: { where: { deletedAt: null } },
+          supplier: true,
+        },
       });
     });
   }

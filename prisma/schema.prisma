@@ -112,7 +112,6 @@ model PurchaseItem {
   quantityUnit     String    @map("quantity_unit")
   unitPrice        Float     @map("unit_price")
   amount           Float     @map("amount")
-  avgWeightPerUnit Float     @map("avg_weight_per_unit")
   note             String?   @map("note")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")

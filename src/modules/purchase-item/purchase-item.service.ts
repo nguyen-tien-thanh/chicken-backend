@@ -53,7 +53,6 @@ export class PurchaseItemService {
           quantityUnit: dto.quantityUnit,
           unitPrice: dto.unitPrice,
           amount,
-          avgWeightPerUnit: dto.avgWeightPerUnit,
           note: dto.note,
         },
       });
@@ -142,9 +141,6 @@ export class PurchaseItemService {
           }),
           ...(dto.unitPrice !== undefined && { unitPrice: dto.unitPrice }),
           amount,
-          ...(dto.avgWeightPerUnit !== undefined && {
-            avgWeightPerUnit: dto.avgWeightPerUnit,
-          }),
           ...(dto.note !== undefined && { note: dto.note }),
         },
       });

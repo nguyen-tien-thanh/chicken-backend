@@ -19,6 +19,16 @@ export class CreateSupplierDto {
   @IsString()
   @IsOptional()
   address?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  bankAccount?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  bankName?: string;
 }
 
 export class UpdateSupplierDto extends PartialType(CreateSupplierDto) {}

@@ -74,14 +74,16 @@ model Customer {
 }
 
 model Supplier {
-  id        String     @id @default(uuid())
-  name      String
-  phone     String     @unique
-  address   String?
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
-  deletedAt DateTime?  @map("deleted_at")
-  purchases Purchase[]
+  id          String     @id @default(uuid())
+  name        String
+  phone       String     @unique
+  address     String?
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  deletedAt   DateTime?  @map("deleted_at")
+  bankAccount String?
+  bankName    String?
+  purchases   Purchase[]
 
   @@map("suppliers")
 }

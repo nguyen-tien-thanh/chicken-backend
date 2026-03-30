@@ -47,6 +47,9 @@ export class PurchaseService {
       const created = await tx.purchase.create({
         data: {
           purchaseDate: dto.purchaseDate,
+          cagesCount: dto.cagesCount,
+          cagesWeight: dto.cagesWeight,
+          averageWeight: dto.averageWeight,
           supplierId: dto.supplierId,
           note: dto.note,
           totalAmount,
@@ -112,6 +115,16 @@ export class PurchaseService {
     if (dto.note !== undefined) {
       data.note = dto.note;
     }
+    if (dto.cagesCount !== undefined) {
+      data.cagesCount = dto.cagesCount;
+    }
+    if (dto.cagesWeight !== undefined) {
+      data.cagesWeight = dto.cagesWeight;
+    }
+    if (dto.averageWeight !== undefined) {
+      data.averageWeight = dto.averageWeight;
+    }
+
     if (Object.keys(data).length === 0) {
       return this.findOne(id);
     }

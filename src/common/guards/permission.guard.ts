@@ -5,14 +5,12 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
-  Logger,
 } from '@nestjs/common';
 import { Permission } from '@prisma/client';
 import { Observable } from 'rxjs';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
-  private readonly logger = new Logger(PermissionGuard.name);
   private defaultRoutes: { path: string; method: string }[] = [];
 
   constructor(private readonly prisma: PrismaService) {}

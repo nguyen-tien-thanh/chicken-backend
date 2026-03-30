@@ -49,6 +49,9 @@ async function seedBusiness(prisma: PrismaClient) {
     data: {
       supplierId: supplier.id,
       purchaseDate: new Date(),
+      cagesCount: 5,
+      cagesWeight: 5,
+      averageWeight: 3.96,
       totalAmount: 12000000,
       note: 'Nhập gà sáng',
     },

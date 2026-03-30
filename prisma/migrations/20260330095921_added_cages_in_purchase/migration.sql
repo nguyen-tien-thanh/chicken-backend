@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "purchases" ADD COLUMN     "average_weight" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "cages_count" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "cages_weight" DOUBLE PRECISION NOT NULL DEFAULT 0;

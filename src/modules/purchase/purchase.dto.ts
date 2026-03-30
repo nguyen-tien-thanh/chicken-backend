@@ -53,6 +53,18 @@ export class CreatePurchaseDto {
   purchaseDate: Date;
 
   @ApiProperty()
+  @IsNumber()
+  cagesCount: number;
+
+  @ApiProperty()
+  @IsNumber()
+  cagesWeight: number;
+
+  @ApiProperty()
+  @IsNumber()
+  averageWeight: number;
+
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   supplierId: string;
@@ -75,6 +87,21 @@ export class UpdatePurchaseDto {
   @IsOptional()
   @IsDate()
   purchaseDate?: Date;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  cagesCount?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  cagesWeight?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  averageWeight?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

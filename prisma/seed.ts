@@ -69,7 +69,6 @@ async function seedBusiness(prisma: PrismaClient) {
       productId: gaSong.id,
       quantity,
       quantityUnit: 'con',
-      avgWeightPerUnit: avgWeight,
       unitPrice,
       amount: quantity * unitPrice,
       note: 'Gà đẹp',

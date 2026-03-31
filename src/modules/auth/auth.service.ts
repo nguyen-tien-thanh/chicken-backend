@@ -50,7 +50,7 @@ export class AuthService {
     const { password, ...userWithoutPassword } = user;
     const token = await this.jwt.signAsync(
       { ...userWithoutPassword },
-      { secret: this.config.get('jwt.secret') },
+      { secret: this.config.get('jwt.secret'), expiresIn: '8h' },
     );
 
     return { user: userWithoutPassword, token };

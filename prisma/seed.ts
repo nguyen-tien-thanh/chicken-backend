@@ -30,7 +30,7 @@ async function seedBusiness(prisma: PrismaClient) {
   // ===== PRODUCT =====
   const gaSong = await prisma.product.create({
     data: {
-      name: 'Gà ta sống',
+      name: 'Gà công nghiệp sống',
       type: ProductType.LIVE,
       categoryId: category.id,
     },
@@ -38,7 +38,7 @@ async function seedBusiness(prisma: PrismaClient) {
 
   const gaLam = await prisma.product.create({
     data: {
-      name: 'Gà ta làm sẵn',
+      name: 'Gà công nghiệp làm sẵn',
       type: ProductType.PROCESSED,
       categoryId: category.id,
     },

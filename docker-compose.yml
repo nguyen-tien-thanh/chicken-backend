@@ -21,6 +21,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
 
   erp:
+    image: nguyentienthanh2909/erp
     build:
       context: .
       dockerfile: Dockerfile

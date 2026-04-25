@@ -20,19 +20,16 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
-  erp:
-    image: nguyentienthanh2909/erp
+  chicken-backend:
+    image: nguyentienthanh2909/chicken-backend
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: erp
+    container_name: chicken-backend
     ports:
       - '8080:8080'
     env_file:
       - .env
-    depends_on:
-      - redis
-      - postgres
 
 volumes:
   redis-data:

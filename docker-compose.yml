@@ -28,9 +28,14 @@ services:
     container_name: chicken-backend
     restart: always
     ports:
-      - '8080:8080'
+      - '8080'
     env_file:
       - .env
+    networks:
+      - chicken_default
+
+networks:
+  chicken_default:
 
 volumes:
   redis-data:

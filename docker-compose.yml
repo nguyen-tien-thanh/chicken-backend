@@ -28,7 +28,7 @@ services:
     container_name: chicken-backend
     restart: always
     ports:
-      - '8080'
+      - '8888:8080'
     env_file:
       - .env
     networks:

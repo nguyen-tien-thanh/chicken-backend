@@ -8,7 +8,7 @@ export class LoginDto {
     description: 'Email của người dùng',
     example: 'example@example.com',
   })
-  email: string;
+  email!: string;
 
   @IsString()
   @IsNotEmpty()
@@ -16,25 +16,17 @@ export class LoginDto {
     description: 'Mật khẩu của người dùng',
     example: 'password',
   })
-  password: string;
+  password!: string;
 }
 
 export class RegisterDto {
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty({
-    description: 'Tên của người dùng',
-    example: 'John Doe',
-  })
-  name: string;
-
   @IsEmail()
   @IsNotEmpty()
   @ApiProperty({
     description: 'Email của người dùng',
     example: 'example@example.com',
   })
-  email: string;
+  email!: string;
 
   @IsString()
   @IsNotEmpty()
@@ -42,5 +34,5 @@ export class RegisterDto {
     description: 'Mật khẩu của người dùng',
     example: 'password',
   })
-  password: string;
+  password!: string;
 }

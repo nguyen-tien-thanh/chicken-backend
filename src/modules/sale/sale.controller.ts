@@ -9,12 +9,16 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { VietQRService } from '../vietqr/vietqr.service';
 import { CreateSaleDto, UpdateSaleDto } from './sale.dto';
 import { SaleService } from './sale.service';
 
 @Controller('sales')
 export class SaleController {
-  constructor(private readonly saleService: SaleService) {}
+  constructor(
+    private readonly saleService: SaleService,
+    private readonly vietqr: VietQRService,
+  ) {}
 
   @Post()
   create(@Body() dto: CreateSaleDto) {
@@ -24,6 +28,25 @@ export class SaleController {
   @Get()
   findAll(@Query() query: IQuery) {
     return this.saleService.findAll(query);
+  }
+
+  @Get(':id/invoice')
+  async getInvoice(@Param('id') id: string) {
+    const sale = await this.saleService.findOne(id, {
+      include: { saleItems: { where: { deletedAt: null } }, customer: true },
+    });
+
+    const qrUrl = this.vietqr.generateQRUrl(sale.remainingAmount, id);
+
+    return {
+      ...sale,
+      payment: {
+        saleId: id,
+        amount: sale.remainingAmount,
+        id,
+        qrUrl,
+      },
+    };
   }
 
   @Get(':id')

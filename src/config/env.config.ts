@@ -24,4 +24,10 @@ export default () => ({
   bcrypt: {
     saltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS ?? '10', 10),
   },
+
+  vietqr: {
+    bankCode: process.env.VIETQR_BANK_CODE ?? '',
+    accountNumber: process.env.VIETQR_ACCOUNT_NUMBER ?? '',
+    accountName: process.env.VIETQR_ACCOUNT_NAME ?? '',
+  },
 });

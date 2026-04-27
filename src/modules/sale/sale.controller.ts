@@ -33,7 +33,10 @@ export class SaleController {
   @Get(':id/invoice')
   async getInvoice(@Param('id') id: string) {
     const sale = await this.saleService.findOne(id, {
-      include: { saleItems: { where: { deletedAt: null } }, customer: true },
+      include: {
+        saleItems: { where: { deletedAt: null }, include: { product: true } },
+        customer: true,
+      },
     });
 
     const qrUrl = this.vietqr.generateQRUrl(sale.remainingAmount, id);

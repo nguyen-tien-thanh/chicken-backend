@@ -3,7 +3,11 @@ import {
   IQueryOneWithoutInclude,
   IQueryWithoutInclude,
 } from '@/common/interfaces';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCustomerDto, UpdateCustomerDto } from './customer.dto';
 
@@ -11,7 +15,13 @@ import { CreateCustomerDto, UpdateCustomerDto } from './customer.dto';
 export class CustomerService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(dto: CreateCustomerDto) {
+  async create(dto: CreateCustomerDto) {
+    const customer = await this.prisma.customer.findUnique({
+      where: { phone: dto.phone },
+    });
+    if (customer) {
+      throw new BadRequestException('Số điện thoại đã được sử dụng');
+    }
     return this.prisma.customer.create({ data: dto });
   }
 

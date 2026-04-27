@@ -118,8 +118,8 @@ export class SaleService {
     const [rows, total] = await Promise.all([
       this.prisma.sale.findMany({
         orderBy: { saleDate: 'desc' },
-        where: { deletedAt: null },
         ...query,
+        where: { deletedAt: null, ...query.where },
       }),
       this.prisma.sale.count({
         where: { deletedAt: null, ...query.where },
@@ -181,10 +181,13 @@ export class SaleService {
         const incomingIds = new Set(
           dto.items.filter((i) => i.id).map((i) => i.id!),
         );
-        const existingItems: Array<{ id: string }> = (existing as any).saleItems ?? [];
+        const existingItems: Array<{ id: string }> =
+          (existing as any).saleItems ?? [];
 
         // soft-delete items not in incoming list
-        for (const ei of existingItems.filter((ei) => !incomingIds.has(ei.id))) {
+        for (const ei of existingItems.filter(
+          (ei) => !incomingIds.has(ei.id),
+        )) {
           await this.ledger.removeByRef(InventoryTransactionType.SALE, ei.id);
           await tx.saleItem.update({
             where: { id: ei.id },
@@ -259,9 +262,15 @@ export class SaleService {
           ? dto.discountAmount
           : (existing as any).discountAmount;
       const paidAmount =
-        dto.paidAmount !== undefined ? dto.paidAmount : (existing as any).paidAmount;
+        dto.paidAmount !== undefined
+          ? dto.paidAmount
+          : (existing as any).paidAmount;
 
-      if (dto.discountAmount !== undefined || dto.paidAmount !== undefined || dto.items !== undefined) {
+      if (
+        dto.discountAmount !== undefined ||
+        dto.paidAmount !== undefined ||
+        dto.items !== undefined
+      ) {
         data.discountAmount = discountAmount;
         data.paidAmount = paidAmount;
         // subtotal will be recalculated via recalcSaleTotals after update

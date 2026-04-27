@@ -68,8 +68,8 @@ export class PurchaseService {
     const [rows, total] = await Promise.all([
       this.prisma.purchase.findMany({
         orderBy: { purchaseDate: 'desc' },
-        where: { deletedAt: null },
         ...query,
+        where: { deletedAt: null, ...query.where },
       }),
       this.prisma.purchase.count({
         where: { deletedAt: null, ...query.where },

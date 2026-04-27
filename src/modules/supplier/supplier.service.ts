@@ -17,8 +17,8 @@ export class SupplierService {
     const [suppliers, total] = await Promise.all([
       this.prisma.supplier.findMany({
         orderBy: { updatedAt: 'desc' },
-        where: { deletedAt: null },
         ...query,
+        where: { deletedAt: null, ...query.where },
       }),
       this.prisma.supplier.count({
         where: { deletedAt: null, ...query.where },

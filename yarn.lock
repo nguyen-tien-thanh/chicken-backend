@@ -333,14 +333,6 @@
   resolved "https://registry.npmjs.org/@borewit/text-codec/-/text-codec-0.2.2.tgz#75025f735c0983b3a871668804a57387e3649375"
   integrity sha512-DDaRehssg1aNrH4+2hnj1B7vnUGEjU6OIlyRdkMd0aUdIUvKXrJfXsy8LVtXAy7DRvYVluWbMspsRhz2lcW0mQ==
 
-"@cacheable/utils@^2.3.3":
-  version "2.4.0"
-  resolved "https://registry.npmjs.org/@cacheable/utils/-/utils-2.4.0.tgz#923512395c037c74ed4c918e6ffa2f6b7407d472"
-  integrity sha512-PeMMsqjVq+bF0WBsxFBxr/WozBJiZKY0rUojuaCoIaKnEl3Ju1wfEwS+SV1DU/cSe8fqHIPiYJFif8T3MVt4cQ==
-  dependencies:
-    hashery "^1.5.0"
-    keyv "^5.6.0"
-
 "@chevrotain/cst-dts-gen@10.5.0":
   version "10.5.0"
   resolved "https://registry.npmjs.org/@chevrotain/cst-dts-gen/-/cst-dts-gen-10.5.0.tgz#922ebd8cc59d97241bb01b1b17561a5c1ae0124e"
@@ -1049,11 +1041,6 @@
     "@napi-rs/nice-win32-arm64-msvc" "1.1.1"
     "@napi-rs/nice-win32-ia32-msvc" "1.1.1"
     "@napi-rs/nice-win32-x64-msvc" "1.1.1"
-
-"@nestjs/cache-manager@^3.1.0":
-  version "3.1.0"
-  resolved "https://registry.npmjs.org/@nestjs/cache-manager/-/cache-manager-3.1.0.tgz#65f3be68154e48557790c0a58a55aadb92439dd0"
-  integrity sha512-pEIqYZrBcE8UdkJmZRduurvoUfdU+3kRPeO1R2muiMbZnRuqlki5klFFNllO9LyYWzrx98bd1j0PSPKSJk1Wbw==
 
 "@nestjs/cli@^11.0.0":
   version "11.0.16"
@@ -2574,14 +2561,6 @@ c12@3.1.0:
     pkg-types "^2.2.0"
     rc9 "^2.1.2"
 
-cache-manager@^7.2.8:
-  version "7.2.8"
-  resolved "https://registry.npmjs.org/cache-manager/-/cache-manager-7.2.8.tgz#a9d41f3dd3b4c9b56858f868b490477efe85823f"
-  integrity sha512-0HDaDLBBY/maa/LmUVAr70XUOwsiQD+jyzCBjmUErYZUKdMS9dT59PqW59PpVqfGM7ve6H0J6307JTpkCYefHQ==
-  dependencies:
-    "@cacheable/utils" "^2.3.3"
-    keyv "^5.5.5"
-
 cacheable-lookup@^7.0.0:
   version "7.0.0"
   resolved "https://registry.npmjs.org/cacheable-lookup/-/cacheable-lookup-7.0.0.tgz#3476a8215d046e5a3202a9209dd13fec1f933a27"
@@ -3858,13 +3837,6 @@ has-tostringtag@^1.0.2:
   dependencies:
     has-symbols "^1.0.3"
 
-hashery@^1.5.0:
-  version "1.5.1"
-  resolved "https://registry.npmjs.org/hashery/-/hashery-1.5.1.tgz#4ba82ad54911ac617467870845d57a9fe508a400"
-  integrity sha512-iZyKG96/JwPz1N55vj2Ie2vXbhu440zfUfJvSwEqEbeLluk7NnapfGqa7LH0mOsnDxTF85Mx8/dyR6HfqcbmbQ==
-  dependencies:
-    hookified "^1.15.0"
-
 hasown@^2.0.2:
   version "2.0.2"
   resolved "https://registry.npmjs.org/hasown/-/hasown-2.0.2.tgz#003eaf91be7adc372e84ec59dc37252cedb80003"
@@ -3882,7 +3854,7 @@ hono@4.11.4:
   resolved "https://registry.npmjs.org/hono/-/hono-4.11.4.tgz#0c1ba7175e08624932224bc7644e4cb22b294080"
   integrity sha512-U7tt8JsyrxSRKspfhtLET79pU8K+tInj5QZXs1jSugO1Vq5dFj3kmZsRldo29mTBfcjDRVRXrEZ6LS63Cog9ZA==
 
-hookified@^1.13.0, hookified@^1.15.0:
+hookified@^1.13.0:
   version "1.15.1"
   resolved "https://registry.npmjs.org/hookified/-/hookified-1.15.1.tgz#b1fafeaa5489cdc29cb85546a8f837ed4ffbbcb6"
   integrity sha512-MvG/clsADq1GPM2KGo2nyfaWVyn9naPiXrqIe4jYjXNZQt238kWyOGrsyc/DmRAQ+Re6yeo6yX/yoNCG5KAEVg==
@@ -4607,7 +4579,7 @@ keyv@^4.5.3, keyv@^4.5.4:
   dependencies:
     json-buffer "3.0.1"
 
-keyv@^5.5.5, keyv@^5.6.0:
+keyv@^5.6.0:
   version "5.6.0"
   resolved "https://registry.npmjs.org/keyv/-/keyv-5.6.0.tgz#03044074c6b4d072d0a62c7b9fa649537baf0105"
   integrity sha512-CYDD3SOtsHtyXeEORYRx2qBtpDJFjRTGXUtmNEMGyzYOKj1TE3tycdlho7kA1Ufx9OYWZzg52QFBGALTirzDSw==
